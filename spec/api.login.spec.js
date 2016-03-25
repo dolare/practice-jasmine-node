@@ -74,14 +74,51 @@ describe('test login api', function() {
         }).then(done).catch(console.log);
     });
 
-    it('check can not login without pwd', function(done) {
-        // 1. post login
-        // 2. get cookie
-        // 3. get login
+    it('check login fail without pwd', function(done){
         login({
             usr: 'xyz'
         }).then(function(body){
-            expect(body).toEqual({msg: 'usr or pwd is required'});
+            expect(body).toEqual({
+                msg: 'usr or pwd is required'
+            });
+        }, function(err){
+            expect(err).toBeNull();
+        }).then(done).catch(console.log);
+    });
+
+    it('check login fail without usr', function(done){
+        login({
+            pwd: 'xyz'
+        }).then(function(body){
+            expect(body).toEqual({
+                msg: 'usr or pwd is required'
+            });
+        }, function(err){
+            expect(err).toBeNull();
+        }).then(done).catch(console.log);
+    });
+
+    it('check login fail with wrong usr', function(done){
+        login({
+            usr: 'xyz1',
+            pwd: 'xyz'
+        }).then(function(body){
+            expect(body).toEqual({
+                msg: 'invalid login info'
+            });
+        }, function(err){
+            expect(err).toBeNull();
+        }).then(done).catch(console.log);
+    });
+
+    it('check login fail with wrong usr', function(done){
+        login({
+            usr: 'xyz',
+            pwd: 'xyz1'
+        }).then(function(body){
+            expect(body).toEqual({
+                msg: 'invalid login info'
+            });
         }, function(err){
             expect(err).toBeNull();
         }).then(done).catch(console.log);
