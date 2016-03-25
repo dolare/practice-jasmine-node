@@ -15,6 +15,19 @@ describe('test login api', function() {
         return cookie;
     };
 
+    var login = function(usr) {
+        return new Promise(function(resolve, reject) {
+            request.post({
+                url: url,
+                body: usr, 
+                json: true
+            }, function(err, response, body) {
+                if (err) reject(err);
+                else resolve(body);
+            });
+        });
+    };
+
     beforeEach(function(done) {
         mongodb.MongoClient
             .connect('mongodb://localhost/l2')
@@ -49,19 +62,28 @@ describe('test login api', function() {
         // 1. post login
         // 2. get cookie
         // 3. get login
-        request.post({
-            url: url,
-            body: {
-                usr: 'xyz',
-                pwd: 'xyz'
-            },
-            json: true
-        }, function(err, response, body) {
-            console.log('login finished', err, response, body);
+        login({
+            usr: 'xyz',
+            pwd: 'xyz'
+        }).then(function(body){
             expect(body).toEqual({
                 usr: 'xyz'
             });
-            done();
-        });
+        }, function(err){
+            expect(err).toBeNull();
+        }).then(done).catch(console.log);
+    });
+
+    it('check can not login without pwd', function(done) {
+        // 1. post login
+        // 2. get cookie
+        // 3. get login
+        login({
+            usr: 'xyz'
+        }).then(function(body){
+            expect(body).toEqual({msg: 'usr or pwd is required'});
+        }, function(err){
+            expect(err).toBeNull();
+        }).then(done).catch(console.log);
     });
 });
