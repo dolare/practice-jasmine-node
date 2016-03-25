@@ -6,9 +6,9 @@ describe('test login api', function() {
     var host = process.env.HOST || 'localhost';
     var url = 'http://' + host + ':' + port + '/api/login';
     var parseCookie = function(response) {
+        if (!response) return;
         var cookie;
         response.headers['set-cookie'].forEach(function(item) {
-            console.log(item);
             if (item.startsWith('connect.sid'))
                 cookie = item.split(';')[0];
         });
@@ -19,9 +19,10 @@ describe('test login api', function() {
         return new Promise(function(resolve, reject) {
             request.post({
                 url: url,
-                body: usr, 
+                body: usr,
                 json: true
             }, function(err, response, body) {
+                login.cookie = parseCookie(response);
                 if (err) reject(err);
                 else resolve(body);
             });
@@ -65,62 +66,87 @@ describe('test login api', function() {
         login({
             usr: 'xyz',
             pwd: 'xyz'
-        }).then(function(body){
+        }).then(function(body) {
             expect(body).toEqual({
                 usr: 'xyz'
             });
-        }, function(err){
+        }, function(err) {
             expect(err).toBeNull();
         }).then(done).catch(console.log);
     });
 
-    it('check login fail without pwd', function(done){
+    it('check login fail without pwd', function(done) {
         login({
             usr: 'xyz'
-        }).then(function(body){
+        }).then(function(body) {
             expect(body).toEqual({
                 msg: 'usr or pwd is required'
             });
-        }, function(err){
+        }, function(err) {
             expect(err).toBeNull();
         }).then(done).catch(console.log);
     });
 
-    it('check login fail without usr', function(done){
+    it('check login fail without usr', function(done) {
         login({
             pwd: 'xyz'
-        }).then(function(body){
+        }).then(function(body) {
             expect(body).toEqual({
                 msg: 'usr or pwd is required'
             });
-        }, function(err){
+        }, function(err) {
             expect(err).toBeNull();
         }).then(done).catch(console.log);
     });
 
-    it('check login fail with wrong usr', function(done){
+    it('check login fail with wrong usr', function(done) {
         login({
             usr: 'xyz1',
             pwd: 'xyz'
-        }).then(function(body){
+        }).then(function(body) {
             expect(body).toEqual({
                 msg: 'invalid login info'
             });
-        }, function(err){
+        }, function(err) {
             expect(err).toBeNull();
         }).then(done).catch(console.log);
     });
 
-    it('check login fail with wrong usr', function(done){
+    it('check login fail with wrong usr', function(done) {
         login({
             usr: 'xyz',
             pwd: 'xyz1'
-        }).then(function(body){
+        }).then(function(body) {
             expect(body).toEqual({
                 msg: 'invalid login info'
             });
-        }, function(err){
+        }, function(err) {
             expect(err).toBeNull();
         }).then(done).catch(console.log);
+    });
+
+    it('check is login after login', function(done) {
+        login({
+                usr: 'xyz',
+                pwd: 'xyz'
+            })
+            .then(function() {
+                return new Promise(function(resolve, reject) {
+                    request({
+                        url: url,
+                        headers: {
+                            cookie: request.cookie(login.cookie)
+                        },
+                        json: true
+                    }, function(err, response, body) {
+                        !!err && reject(err) || resolve(body);
+                    });
+                });
+            })
+            .then(function(info){
+                expect(info).toEqual({usr: 'xyz'});
+                done();
+            })
+            .catch(done);
     });
 });
