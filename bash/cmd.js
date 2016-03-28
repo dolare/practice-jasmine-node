@@ -10,6 +10,7 @@ var db = require('./db');
 //    });
 
 parse.parseDir(__dirname + '/data').then(db.saveInterviews).then(function(){
+    
     return db.Conn.then(function(db) {
         return db.close();
     })    

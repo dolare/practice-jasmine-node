@@ -1,8 +1,10 @@
-var fs = require('fs');
+//var fs = require('fs');
 //var dbConn = require('./db');
+
+var Promise = require('bluebird');
+var fs = Promise.promisifyAll(require('fs'));
 var _ = require('lodash');
 var Q = require('q');
-
 
 function parseLine(l, interview, interviews) {
     var line = l.trim();
@@ -38,6 +40,7 @@ function parseFile(file) {
     var interviews = [];
 
     return new Promise(function(resolve, reject) {
+
         fs.readFile(file, 'utf8', function(err, cnt) {
             if (err) {
                 reject(err);
@@ -58,30 +61,30 @@ function parseFile(file) {
 
 
 function parseDir(dir) {
-    
-    
-    return  fs.readdir(dir).then(function(files) {
-            console.log(files);
-            
-            var promises = _.map(files,function(file){
-                var filePath = dir + '/' + file;
-                var fsStat = fs.statSync(filePath);
-                if (fsStat.isDirectory()) promises.push(parseDir(filePath));
-                else if (fsStat.isFile() && file.endsWith('.txt')) {
-                    return parseFile(filePath);
-                } 
-                else console.log('ignore', filePath);
-                        
-            });
-            
-            return Promise.all(promises).then(function(interviewses){
-                
-                return _.reduce(interviewses,function(result,interviews){
-                    return result.concat(interviews);
-                },[]);
-            });
-            
+
+
+    // return Q.nfcall(fs.readdir,dir).then(function(files) {
+    return fs.readdirAsync(dir).then(function(files) {
+        console.log(files);
+
+        var promises = _.map(files, function(file) {
+            var filePath = dir + '/' + file;
+            var fsStat = fs.statSync(filePath);
+            if (fsStat.isDirectory()) promises.push(parseDir(filePath));
+            else if (fsStat.isFile() && file.endsWith('.txt')) {
+                return parseFile(filePath);
+            } else console.log('ignore', filePath);
+
         });
+
+        return Promise.all(promises).then(function(interviewses) {
+
+            return _.reduce(interviewses, function(result, interviews) {
+                return result.concat(interviews);
+            }, []);
+        });
+
+    });
 
 }
 
